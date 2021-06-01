@@ -2,6 +2,7 @@
 import cherrypy
 import sys
 import json
+from cherrypy.lib.static import serve_file
 from subprocess import run
 from montreal_forced_aligner.command_line.mfa import main as mfa
 from tempfile import TemporaryDirectory
@@ -9,6 +10,34 @@ from shutil import rmtree
 from os import mkdir
 
 acoustic_model = '/home/kruza/aligner/acoustic_model.zip'
+
+def get_audio_splits(audio_path, audio_id):
+  audio_length = run(['soxi', '-D', audio_path], capture_output = True, text = True)
+  splitpoints = []
+
+  step = 120
+  prev_timepos = 0
+  timepos = prev_timepos + step
+  while True:
+    if timepos > audio_length:
+      splitpoints.append({
+        'duration': step,
+        'basename': '%s--from-%.2f--to-%.2f.mp3' % (audio_id, prev_timepos, audio_length),
+        'from': prev_timepos,
+        'to': audio_length,
+      })
+      break
+    splitpoints.append({
+      'duration': step,
+      'basename': '%s--from-%.2f--to-%.2f.mp3' % (audio_id, prev_timepos, timepos),
+      'from': prev_timepos,
+      'to': timepos,
+    })
+    prev_timepos = timepos
+    timepos = timepos + step
+
+  meta = { audio_id: { 'formats': { 'mp3': splitpoints } } }
+  return 'jsonp_splits(\n%s\n)\n' % (json.dumps(meta))
 
 class Aligner(object):
   def _align(self, workdir):  # workdir must include alignee.{wav,lab}
@@ -113,8 +142,24 @@ class Aligner(object):
 
     aligned = self._align(workdir)
 
+    audio_split_metadata = get_audio_splits(audio_fn, request_id)
+
     cherrypy.response.headers['Content-Type'] = 'text/json'
-    return json.dumps({ 'status': 'OK', 'session': request_id, 'aligned':  aligned })
+    return json.dumps({
+      'status': 'OK',
+      'session': request_id,
+      'aligned':  aligned,
+      'split_meta': audio_split_metadata,
+    })
+
+  @cherrypy.expose
+  def audio_chunk(self, session, start, end):
+    workdir = '/tmp/%s' % (session)
+    source_audio_fn = '%s/%s' % (workdir, 'orig_audio')
+    chunk_fn = '%s/%s--from-%.2f--to-%.2f.mp3' % (workdir, session, start, end)
+    run(['sox', source_audio_fn, chunk_fn, 'trim', start, '=%s' % (end)])
+    return serve_file(chunk_fn, content_type='audio/mpeg')
+
 
 cherrypy.config.update({
   'server.socket_host': '0.0.0.0',
