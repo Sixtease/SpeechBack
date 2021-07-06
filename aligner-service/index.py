@@ -7,7 +7,7 @@ from subprocess import run
 from montreal_forced_aligner.command_line.mfa import main as mfa
 from tempfile import TemporaryDirectory
 from shutil import rmtree
-from os import mkdir
+from os import mkdir, path
 
 acoustic_model = '/home/kruza/aligner/acoustic_model.zip'
 
@@ -61,11 +61,11 @@ class Aligner(object):
       outdir,
     ]
     mfa()
+    
+    alignment_id = path.basename(workdir)
     aligned = None
     with open('%s/%s_alignee.TextGrid' % (outdir, alignment_id), 'r') as f:
       aligned = f.read()
-
-    alignment_id = os.path.basename(workdir)
     rmtree('/home/kruza/Documents/MFA/%s' % (alignment_id))
 
     return aligned
