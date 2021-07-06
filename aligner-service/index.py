@@ -62,7 +62,7 @@ class Aligner(object):
     ]
     mfa()
     aligned = None
-    with open('%s/%s_alignee.TextGrid' % (outdir, request_id), 'r') as f:
+    with open('%s/%s_alignee.TextGrid' % (outdir, alignment_id), 'r') as f:
       aligned = f.read()
 
     alignment_id = os.path.basename(workdir)
