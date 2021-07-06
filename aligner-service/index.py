@@ -42,6 +42,10 @@ def get_audio_splits(audio_path, audio_id):
 class Aligner(object):
   def _align(self, workdir):  # workdir must include alignee.{wav,lab}
     dictfn = '%s/dictionary' % (workdir)
+    transfn = '%s/alignee.lab' % (workdir)
+    transcript = None;
+    with open(transfn, 'r') as f:
+      transcript = f.read()
     dict_result = run(['bash', '/home/kruza/aligner/mkdict.sh'], capture_output = True, input = transcript, text = True)
     with open(dictfn, 'w') as f:
       f.write(dict_result.stdout)
