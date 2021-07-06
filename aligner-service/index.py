@@ -43,7 +43,8 @@ class Aligner(object):
   def _align(self, workdir):  # workdir must include alignee.{wav,lab}
     dictfn = '%s/dictionary' % (workdir)
     transfn = '%s/alignee.lab' % (workdir)
-    outdir = TemporaryDirectory()
+    outdir_obj = TemporaryDirectory()
+    outdir = outdir_obj.name
     transcript = None;
     with open(transfn, 'r') as f:
       transcript = f.read()
