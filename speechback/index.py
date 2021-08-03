@@ -9,7 +9,7 @@ import json
 
 class SpeechBack(object):
   @cherrypy.expose
-  def submit_audio(self, audio):
+  def submit_audio(self, audio, transcript):
     if cherrypy.request.method == 'OPTIONS':
       cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
 
@@ -27,6 +27,14 @@ class SpeechBack(object):
         f.write(data)
 
     run(['sox', unformatted_audio_fn, audio_fn, 'remix', '-', 'rate', '16k'])
+
+    transcript_fn = '%s/%s' % (workdir, 'transcript.lab')
+    with open(transcript_fn, 'w') as f:
+      while True:
+        data = transcript.file.read(8192)
+        if not data:
+          break
+        f.write(data)
     
     cherrypy.response.headers['Content-Type'] = 'text/json'
     return json.dumps({ 'status': 'OK', 'session': request_id })
