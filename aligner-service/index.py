@@ -12,7 +12,8 @@ from os import mkdir, path
 acoustic_model = '/home/kruza/aligner/acoustic_model.zip'
 
 def get_audio_splits(audio_path, audio_id):
-  audio_length = run(['soxi', '-D', audio_path], capture_output = True, text = True)
+  soxi_result = run(['soxi', '-D', audio_path], capture_output = True, text = True)
+  audio_length = float(soxi_result.stdout)
   splitpoints = []
 
   step = 120
