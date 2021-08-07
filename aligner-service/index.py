@@ -11,34 +11,33 @@ from os import mkdir, path
 
 acoustic_model = '/home/kruza/aligner/acoustic_model.zip'
 
-def get_audio_splits(audio_path, audio_id):
-  soxi_result = run(['soxi', '-D', audio_path], capture_output = True, text = True)
-  audio_length = float(soxi_result.stdout)
-  splitpoints = []
-
-  step = 120
-  prev_timepos = 0
-  timepos = prev_timepos + step
-  while True:
-    if timepos > audio_length:
-      splitpoints.append({
-        'duration': step,
-        'basename': '%s--from-%.2f--to-%.2f.mp3' % (audio_id, prev_timepos, audio_length),
-        'from': prev_timepos,
-        'to': audio_length,
-      })
-      break
-    splitpoints.append({
-      'duration': step,
-      'basename': '%s--from-%.2f--to-%.2f.mp3' % (audio_id, prev_timepos, timepos),
-      'from': prev_timepos,
-      'to': timepos,
-    })
-    prev_timepos = timepos
-    timepos = timepos + step
-
-  meta = { audio_id: { 'formats': { 'mp3': splitpoints } } }
-  return 'jsonp_splits(\n%s\n)\n' % (json.dumps(meta))
+#def get_audio_splits(audio_path, audio_id):
+#  soxi_result = run(['soxi', '-D', audio_path], capture_output = True, text = True)
+#  audio_length = float(soxi_result.stdout)
+#  splitpoints = []
+#
+#  step = 120
+#  prev_timepos = 0
+#  timepos = prev_timepos + step
+#  while True:
+#    if timepos > audio_length:
+#      splitpoints.append({
+#        'duration': step,
+#        'basename': '%s--from-%.2f--to-%.2f.mp3' % (audio_id, prev_timepos, audio_length),
+#        'from': prev_timepos,
+#        'to': audio_length,
+#      })
+#      break
+#    splitpoints.append({
+#      'duration': step,
+#      'basename': '%s--from-%.2f--to-%.2f.mp3' % (audio_id, prev_timepos, timepos),
+#      'from': prev_timepos,
+#      'to': timepos,
+#    })
+#    prev_timepos = timepos
+#    timepos = timepos + step
+#
+#  return { audio_id: { 'formats': { 'mp3': splitpoints } } }
 
 class Aligner(object):
   def _align(self, workdir):  # workdir must include alignee.{wav,lab}
@@ -149,14 +148,14 @@ class Aligner(object):
 
     aligned = self._align(workdir)
 
-    audio_split_metadata = get_audio_splits(audio_fn, request_id)
+    #audio_split_metadata = get_audio_splits(audio_fn, request_id)
 
     cherrypy.response.headers['Content-Type'] = 'text/json'
     return json.dumps({
       'status': 'OK',
       'session': request_id,
       'aligned':  aligned,
-      'split_meta': audio_split_metadata,
+      #'split_meta': audio_split_metadata,
     })
 
   @cherrypy.expose
